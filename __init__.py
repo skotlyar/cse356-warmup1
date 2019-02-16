@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, make_response
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, reqparse
 import datetime
+import sys
 
 app = Flask(__name__)
 api = Api(app)
@@ -27,6 +28,23 @@ class MakeMove(Resource):
 		# Choose move
 		# Check winner
 		# Return updated JSON
+		# grid = request.form['grid']
+		parser = reqparse.RequestParser()
+		parser.add_argument('grid', action='append')
+		args = parser.parse_args()
+		grid = args['grid']
+		print(str(grid) + "##############################", file=sys.stderr)
+		# print(str(request['grid']) + "##############################", file=sys.stderr)
+
+		for i in range(len(grid)):
+			if(grid[i] == ' '):
+				grid[i] = 'O'
+				break
+		resp = {}
+		resp['grid'] = grid
+		resp['winner'] = ''
+		return resp
+
 
 api.add_resource(HelloWorld, '/')
 api.add_resource(NameDate, '/ttt/')
