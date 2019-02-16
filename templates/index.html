@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='index.css') }}"/>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script type="text/javascript" src="{{url_for('static', filename='index.js')}}"></script>
+	<title>Warmup Project 1</title>
+</head>
+<body>
+{% if stuff %}
+  <div>Hello {{ stuff.name }}, {{ stuff.date }}</div>
+{% endif %}
+<div class="boxes">
+	<div id="box-1" class="box-item">1</div>
+	<div id="box-2" class="box-item">2</div>
+	<div id="box-3" class="box-item">3</div>
+	<div id="box-4" class="box-item">4</div>
+	<div id="box-5" class="box-item">5</div>
+	<div id="box-6" class="box-item">6</div>
+	<div id="box-7" class="box-item">7</div>
+	<div id="box-8" class="box-item">8</div>
+	<div id="box-9" class="box-item">9</div>
+</div>
+<!-- <div>
+	<div>1</div>
+	<div>2</div>
+	<div>3</div>
+	<div>4</div>
+	<div>5</div>
+	<div>6</div>
+	<div>7</div>
+	<div>8</div>
+	<div>9</div>
+</div> -->
+</body>
+</html>
