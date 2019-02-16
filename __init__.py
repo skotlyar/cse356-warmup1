@@ -39,15 +39,18 @@ class MakeMove(Resource):
 		# Parse arguments from server
 		parser = reqparse.RequestParser()
 		parser.add_argument('grid', action='append')
+		parser.add_argument('model', action='append')
 		args = parser.parse_args()
 		grid = args['grid']
-
+		modelstr = args['model']
+		model = [int(i) for i in modelstr]
 		resp = {}
 		resp['grid'] = grid
+		resp['model'] = model
 		resp['winner'] = ''
 
 		#Check for winner
-		winner = ttt.checkWinner(grid)
+		winner = ttt.checkWinner(model)
 
 		# If there is a winner, return response
 		if winner != '':
@@ -55,12 +58,16 @@ class MakeMove(Resource):
 
 		# Otherwise, make a move
 		else:
-			for i in range(len(grid)):
-				if(grid[i] == ' '):
-					grid[i] = 'O'
-					break
+			# for i in range(len(grid)):
+			# 	if(grid[i] == ' '):
+			# 		grid[i] = 'O'
+			# 		model[i] = -1
+			# 		break
+			move = ttt.makeMove(model)
+			grid[move] = 'O'
+			model[move] = -1
 
-			resp['winner'] = ttt.checkWinner(grid)
+			resp['winner'] = ttt.checkWinner(model)
 		
 		return resp
 
