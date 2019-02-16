@@ -21,9 +21,16 @@ class NameDate(Resource):
 		headers = {'Content-Type': 'text/html'}
 		return make_response(render_template('home.html'),200,headers)
 
+class MakeMove(Resource):
+	def post(self):
+		# Check winner
+		# Choose move
+		# Check winner
+		# Return updated JSON
 
 api.add_resource(HelloWorld, '/')
 api.add_resource(NameDate, '/ttt/')
+api.add_resource(MakeMove, '/ttt/play')
 
 
 if __name__ == '__main__':
