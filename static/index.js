@@ -22,7 +22,7 @@ $(function(){
 			var grid = JSON.stringify(board['grid']);
 			console.log(grid);
 			console.log('run 3');
-			$.post('http://localhost:5000/ttt/play', $.param(board, true), (data) => {
+			$.post('http://130.245.170.88/ttt/play', $.param(board, true), (data) => {
 				/*optional stuff to do after success */
 				sleep(500).then(() => {
 					//TODO don't allow user to click open boxes when game is over

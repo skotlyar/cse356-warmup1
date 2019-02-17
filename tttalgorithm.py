@@ -48,7 +48,7 @@ def checkWinner(board):
 
 	# Check that game hasn't finished
 	for i in board:
-		print('\n\n' + str(type(i)) + str(i) + '\n\n', file=sys.stderr)
+		#print('\n\n' + str(type(i)) + str(i) + '\n\n', file=sys.stderr)
 		if i == 0:
 			return ''
 	
