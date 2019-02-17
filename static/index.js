@@ -1,4 +1,4 @@
-var board = {'grid':[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], 'model':[0,0,0,0,0,0,0,0,0]};
+var board = {'grid':[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']};
 // var boardModel = [0,0,0,0,0,0,0,0,0];
 const sleep = (milliseconds) => {
   return new Promise(resolve => setTimeout(resolve, milliseconds))
@@ -18,10 +18,10 @@ $(function(){
 			$('#' + e.target.id).text('X');
 
 			board.grid[e.target.id] = 'X';
-			board.model[e.target.id] = 1;
+			// board.model[e.target.id] = 1;
 			var grid = JSON.stringify(board['grid']);
 			console.log(grid);
-			console.log('run 3');
+			console.log('run 4');
 			$.post('http://130.245.170.88/ttt/play', $.param(board, true), (data) => {
 				/*optional stuff to do after success */
 				sleep(500).then(() => {
@@ -41,7 +41,7 @@ $(function(){
 					for(let i = 0; i < data.grid.length; i++){
 						$('#' + i).text(data.grid[i]);
 						board.grid[i] = data.grid[i];
-						board.model[i] = data.model[i];
+						// board.model[i] = data.model[i];
 					}
 				});
 			});

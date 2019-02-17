@@ -42,11 +42,19 @@ class MakeMove(Resource):
 		parser.add_argument('model', action='append')
 		args = parser.parse_args()
 		grid = args['grid']
-		modelstr = args['model']
-		model = [int(i) for i in modelstr]
+		# modelstr = args['model']
+		# model = [1 if i == 'X' for i in modelstr]
+		model = []
+		for i in grid:
+			if i == 'X':
+				model.append(1)
+			elif i == 'O':
+				model.append(-1)
+			else:
+				model.append(0)
 		resp = {}
 		resp['grid'] = grid
-		resp['model'] = model
+		# resp['model'] = model
 		resp['winner'] = ''
 
 		#Check for winner
@@ -69,6 +77,7 @@ class MakeMove(Resource):
 
 			resp['winner'] = ttt.checkWinner(model)
 		
+		# print('#######################model:' + str(model), file=sys.stderr)
 		return resp
 
 
