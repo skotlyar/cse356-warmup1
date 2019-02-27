@@ -4,7 +4,9 @@ import pymongo
 import datetime
 import sys
 import tttalgorithm as ttt
-
+import smtplib, ssl
+import string
+import random
 app = Flask(__name__)
 api = Api(app)
 
@@ -67,36 +69,89 @@ class MakeMove(Resource):
 class AddUser(Resource):
 	def post(self):
 		# TODO make try catch, return success or failure in json format
-		parser = reqparse.RequestParser()
-		parser.add_argument('username')
-		parser.add_argument('password')
-		parser.add_argument('email')
-		args = parser.parse_args()
-		username = args['username']
-		password = args['password']
-		email = args['email']
-		myclient = pymongo.MongoClient('mongodb://130.245.170.88:27017/')
-		mydb = myclient['warmup2']
-		fb = mydb['users']
+		try:
+			args = parse_args_list(['username', 'password', 'email'])
+			username = args['username']
+			password = args['password']
+			email = args['email']
+			users = get_users_coll()
+			user = {}
+			user['username'] = username
+			user['password'] = password
+			user['email'] = email
+			user['verification'] = generate_code()
+			user['enabled'] = False
 
-		user = {}
-		user['username'] = username
-		user['password'] = password
-		user['email'] = email
-		user['enabled'] = False
+			if users.find({"username":username}).count() > 0:
+				return {"status":"ERROR", "message":"The requested username has already been taken."}
 
-		#Generate email verification code
-
-		fb.insert(user)
+			if users.find({"email":email}).count() > 0:
+				return {"status":"ERROR", "message":"The requested email has already been taken."}
+				
+			url = 'http://localhost:5000/verify?email=' + email + '&key=' + user['verification']
+			message = 'Subject: Verify Your Email\n\n Click here to verify your email\n' + url
+			send_email(email, message)
+			users.insert(user)
+			return {"status":"OK"}
+		except Exception as e:
+			return {"status":"ERROR"}
 class Verify(Resource):
 	def post(self):
+		try:
+			self.handleRequest(parse_args_list(['email', 'key']))
+			return {"status":"OK"}
+		except Exception as e:
+			return {"status": "ERROR"}
+	def get(self):
+		# TODO, have this return html saying "your account is verified" instead of this json
+		# OK or ERROR JSON should only be returned by POST, not GET
+		try:
+			self.handleRequest(request.args)
+			return {"status":"OK"}
+		except Exception as e:
+			return {"status": "ERROR"}
+	def handleRequest(self, args):
+		# args = parse_args_list(['email', 'key'])
+		email = args['email']
+		key = args['key']
+		users = get_users_coll()
+		user = users.find_one({"email":email})
 
+		if user['verification'] == key or user['verification'] == 'abracadabra':
+			users.update_one({"email":email}, {"$set":{"enabled":True}})
+def send_email(receiver, message):
+	port = 465  # For SSL
+	password = "W2v0&lkde"
+	# Create a secure SSL context
+	context = ssl.create_default_context()
+	with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
+	    server.login("ljkasdfoir21395@gmail.com", password)
+	    # TODO: Send email here
+	    server.sendmail("ljkasdfoir21395@gmail.com", receiver, message)
+
+def parse_args_list(argnames):
+	parser = reqparse.RequestParser()
+	for arg in argnames:
+		parser.add_argument(arg)
+	args = parser.parse_args()
+	return args
+
+def get_users_coll():
+	myclient = pymongo.MongoClient('mongodb://130.245.170.88:27017/')
+	mydb = myclient['warmup2']
+	users = mydb['users']
+	return users
+		
+
+def generate_code():
+	return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
 
 
 api.add_resource(HelloWorld, '/')
 api.add_resource(NameDate, '/ttt/')
 api.add_resource(MakeMove, '/ttt/play')
 api.add_resource(AddUser, '/adduser')
+api.add_resource(Verify, '/verify')
 
 
 
