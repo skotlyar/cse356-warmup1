@@ -13,19 +13,14 @@ $(function(){
 		if(gameover){
 			return;
 		}
-		if($('#' + e.target.id).text() == ' ')
-		{
+		if($('#' + e.target.id).text() == ' '){
 			$('#' + e.target.id).text('X');
-
 			board.grid[e.target.id] = 'X';
-			// board.model[e.target.id] = 1;
 			var grid = JSON.stringify(board['grid']);
 			console.log(grid);
 			console.log('run 4');
 			$.post('http://130.245.170.88/ttt/play', $.param(board, true), (data) => {
-				/*optional stuff to do after success */
 				sleep(500).then(() => {
-					//TODO don't allow user to click open boxes when game is over
 					if(data.winner != ''){
 						switch(data.winner){
 							case 'X':
@@ -41,7 +36,6 @@ $(function(){
 					for(let i = 0; i < data.grid.length; i++){
 						$('#' + i).text(data.grid[i]);
 						board.grid[i] = data.grid[i];
-						// board.model[i] = data.model[i];
 					}
 				});
 			});
