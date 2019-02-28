@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, make_response
+from flask import Flask, request, render_template, make_response, jsonify
 from flask_restful import Resource, Api, reqparse
 import pymongo
 import datetime
@@ -128,7 +128,10 @@ class Login(Resource):
 		headers = {'Content-Type': 'text/html'}
 		return make_response(render_template('login.html'),200,headers)
 	def post(self):
-		response = {}
+		headers = {'Content-Type': 'application/json'}
+		response = make_response(jsonify({"status": "OK"}), 200, headers)
+		response.set_cookie('username', '22')
+		return response
 		
 
 
