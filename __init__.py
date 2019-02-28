@@ -10,9 +10,11 @@ import random
 app = Flask(__name__)
 api = Api(app)
 
-class HelloWorld(Resource):
-    def get(self):
-        return {'hello': 'world'}
+class Homepage(Resource):
+	def get(self):
+		headers = {'Content-Type': 'text/html'}
+		return make_response(render_template('signup.html'),200,headers)
+
 
 class NameDate(Resource):
 	def post(self):
@@ -87,7 +89,7 @@ class AddUser(Resource):
 
 			if users.find({"email":email}).count() > 0:
 				return {"status":"ERROR", "message":"The requested email has already been taken."}
-				
+
 			url = 'http://localhost:5000/verify?email=' + email + '&key=' + user['verification']
 			message = 'Subject: Verify Your Email\n\n Click here to verify your email\n' + url
 			send_email(email, message)
@@ -119,15 +121,26 @@ class Verify(Resource):
 
 		if user['verification'] == key or user['verification'] == 'abracadabra':
 			users.update_one({"email":email}, {"$set":{"enabled":True}})
+
+class Login(Resource):
+
+	def get(self):
+		headers = {'Content-Type': 'text/html'}
+		return make_response(render_template('login.html'),200,headers)
+	def post(self):
+		response = {}
+		
+
+
 def send_email(receiver, message):
 	port = 465  # For SSL
 	password = "W2v0&lkde"
 	# Create a secure SSL context
 	context = ssl.create_default_context()
 	with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-	    server.login("ljkasdfoir21395@gmail.com", password)
-	    # TODO: Send email here
-	    server.sendmail("ljkasdfoir21395@gmail.com", receiver, message)
+		server.login("ljkasdfoir21395@gmail.com", password)
+		# TODO: Send email here
+		server.sendmail("ljkasdfoir21395@gmail.com", receiver, message)
 
 def parse_args_list(argnames):
 	parser = reqparse.RequestParser()
@@ -147,13 +160,14 @@ def generate_code():
 	return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
 
 
-api.add_resource(HelloWorld, '/')
+api.add_resource(Homepage, '/')
 api.add_resource(NameDate, '/ttt/')
 api.add_resource(MakeMove, '/ttt/play')
 api.add_resource(AddUser, '/adduser')
 api.add_resource(Verify, '/verify')
+api.add_resource(Login, '/login')
 
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+	app.run(debug=True)
