@@ -128,9 +128,34 @@ class Login(Resource):
 		headers = {'Content-Type': 'text/html'}
 		return make_response(render_template('login.html'),200,headers)
 	def post(self):
+		# validate user and password
+		args = parse_args_list(['username', 'password'])
+		users = get_users_coll()
+		currUser = users.find_one({'username': args['username']})
+		
+		resp = {}
+		if currUser != None:
+			if currUser['password'] == password:
+				if currUser['verification']:
+					#all good
+				else:
+					resp['status'] = "ERROR"
+					resp['message'] = "User has not been validated. Check your email."
+					
+			else:
+				resp['status'] = "ERROR"
+				resp['message'] = "The entered password is incorrect."
+
+		else:
+			resp['status'] = "ERROR"
+			resp['message'] = "The entered username doesn't exist."
+
+
 		headers = {'Content-Type': 'application/json'}
 		response = make_response(jsonify({"status": "OK"}), 200, headers)
 		response.set_cookie('username', '22')
+
+
 		return response
 		
 
