@@ -11,7 +11,7 @@ $(function(){
 
 		$.post('http://localhost:5000/login', stringJson, (data, status, xhr) => {
 			var cookie = Cookies.get('username');
-			console.log("hello");
+			console.log(cookie);
 		});
 	});
 });
