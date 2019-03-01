@@ -9,6 +9,19 @@ var gameover = false;
 
 $(function(){
 	console.log(board);
+
+	// Load the board from the cookie
+	var cookie = Cookies.get();
+	console.log(cookie.grid.replace(/'/g, "\"").replace(/\\054/g,",").replace(/u/g,""));
+	var correctGrid = cookie.grid.replace(/'/g, "\"").replace(/\\054/g,",").replace(/u/g,"");
+	var initBoard = JSON.parse(correctGrid);
+
+	for(let i = 0; i < initBoard.length; i++){
+		$('#' + i).text(initBoard[i]);
+		board.grid[i] = initBoard[i];
+	}
+
+	// Whenever a user makes a move
 	$('.box-item').click((e)=>{
 		if(gameover){
 			return;
