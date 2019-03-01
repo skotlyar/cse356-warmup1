@@ -1,17 +1,28 @@
 
 $(function(){
 	$('#submit').click((e)=>{
-		var user = $('#user').text();
-		var pass = $('#pass').text();
+		var user = $('#user').val();
+		var pass = $('#pass').val();
 
-		var json = {}
-		json.username = user
-		json.password = pass
-		var stringJson = JSON.stringify(json);
+		var validation = {'username':user, 'password':pass};
+		// console.log(validation);
+		// validation.username = user;
+		// validation.password = pass;
+		var stringJson = JSON.stringify(validation);
 
-		$.post('http://localhost:5000/login', stringJson, (data, status, xhr) => {
-			var cookie = Cookies.get('username');
+		$.post('http://localhost:5000/login', $.param(validation, true), (data, status, xhr) => {
+			var cookie = Cookies.get();
+			// cookie.grid.replace(/'/g, "\"");
+			// console.log(JSON.parse(cookie.grid.replace(/'/g, "\"").replace(/\\054/g,",")));
 			console.log(cookie);
+			if(data.status == "OK"){
+				$('#error').text('');
+				$('#playgame').css('visibility', 'visible');
+			}
+			else{
+				$('#error').text(data.message);
+			}
+
 		});
 	});
 });

@@ -19,7 +19,8 @@ $(function(){
 			var grid = JSON.stringify(board['grid']);
 			console.log(grid);
 			console.log('run 4');
-			$.post('http://130.245.170.88/ttt/play', $.param(board, true), (data) => {
+			// $.post('http://localhost:5000/ttt/play', $.param(board, true), (data) => {
+			$.post('http://localhost:5000/ttt/play', $.param({'move':e.target.id}, true), (data) => {
 				sleep(500).then(() => {
 					if(data.winner != ''){
 						switch(data.winner){

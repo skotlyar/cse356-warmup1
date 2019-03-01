@@ -9,18 +9,19 @@
 </head>
 <body>
 
-	<form action="http://localhost:5000/ttt">
+	<div id="error"></div>
+	<form action="http://localhost:5000/ttt/" method="post">
 		Username:<br>
-		<input id = "user" type="text" name="username"><br>
+		<input id="user" type="text" name="username"><br>
 		Password:<br>
 		<input id="pass" type="text" name="password"><br>
-		<input id="submit" type="button" name="login">
+		<input id="submit" type="button" name="login" value="login">
 
 		<div>
 			Click <a href="http://localhost:5000/">here</a> to sign up.
 		</div>
 
-		<input type="submit" id="playgame" name="Play">
+		<input type="submit" id="playgame" name="play" value="Play">
 	</form>
 
 
