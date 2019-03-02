@@ -23,10 +23,13 @@ $(function(){
 
 	// Whenever a user makes a move
 	$('.box-item').click((e)=>{
+		console.log('in click handler');
 		if(gameover){
+			console.log('gameover');
 			return;
 		}
 		if($('#' + e.target.id).text() == ' '){
+			console.log('in if statement');
 			$('#' + e.target.id).text('X');
 			board.grid[e.target.id] = 'X';
 			var grid = JSON.stringify(board['grid']);
@@ -54,6 +57,7 @@ $(function(){
 				});
 			});
 		}
+		console.log('outside if');
 	});
 
 

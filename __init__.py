@@ -81,8 +81,8 @@ class NameDate(Resource):
 
 class MakeMove(Resource):
 	def post(self):
-		username = request.cookie.get('username')
-		password = request.cookie.get('password')
+		username = request.cookies.get('username')
+		password = request.cookies.get('password')
 		users = get_users_coll()
 		user = users.find_one({'username':username})
 		if user['password'] != password:
@@ -119,19 +119,21 @@ class MakeMove(Resource):
 			model[move] = -1
 			resp['winner'] = ttt.checkWinner(model)
 			self._update_winner(resp['winner'], username)
-			users.update_one({'username':username}, {'grid':grid})
+			users.update_one({'username':username}, {'$set':{'current_game.grid':grid}})
 		# print('#######################model:' + str(model), file=sys.stderr)
 		return resp
 	def _update_winner(self, winner, username):
+		users = get_users_coll()
+		user = users.find_one({'username': username})
 		if winner == ' ':
 			ties = int(user['score']['tie']) + 1
-			users.update_one({'username':username}, {'score.tie':ties})
+			users.update_one({'username':username}, {'$set':{'score.tie':ties}})
 		elif winner == 'X':
 			wins = int(user['score']['wins']) + 1
-			users.update_one({'username':username}, {'score.wins':wins})
+			users.update_one({'username':username}, {'$set':{'score.wins':wins}})
 		elif winner == 'O':
 			losses = int(user['score']['wgor']) + 1
-			users.update_one({'username':username}, {'score.wgor':losses})
+			users.update_one({'username':username}, {'$set':{'score.wgor':losses}})
 
 class AddUser(Resource):
 	def post(self):
@@ -156,7 +158,7 @@ class AddUser(Resource):
 			date = str(now.year) + '-' + month + '-' + day
 			game['id'] = 1
 			game['start_date'] = date
-			game['grid'] = ["","","","","","","","",""]
+			game['grid'] = [" "," "," "," "," "," "," "," "," "]
 			# user['games'].append(game)
 			user['current_game'] = game
 			winner = ''
@@ -178,7 +180,8 @@ class AddUser(Resource):
 			return {"status":"OK"}
 		
 		except Exception as e:
-		 	return {"status":"ERROR"}
+			print(e, file=sys.stderr)
+			return {"status":"ERROR"}
 
 class Verify(Resource):
 	def post(self):
@@ -219,13 +222,13 @@ class Login(Resource):
 		resp = {}
 		if currUser != None:
 			if currUser['password'] == args['password']:
-				if currUser['verification']:
+				if currUser['enabled']:
+					print('####################### verification' + currUser['verification'], file=sys.stderr)
 					headers = {'Content-Type': 'application/json'}
 					response = make_response(jsonify({"status": "OK"}), 200, headers)
 					response.set_cookie('username', currUser['username'])
 					response.set_cookie('password', currUser['password'])
 					response.set_cookie('grid', str(currUser['current_game']['grid']))
-					# print('####################### validated', file=sys.stderr)
 					return response
 
 				else:
