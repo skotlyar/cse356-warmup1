@@ -216,7 +216,7 @@ class AddUser(Resource):
 			return {"status":"OK"}
 		
 		except Exception as e:
-			print(e, file=sys.stderr)
+			# print(e, file=sys.stderr)
 			return {"status":"ERROR"}
 
 class Verify(Resource):
@@ -225,7 +225,7 @@ class Verify(Resource):
 			self.handleRequest(parse_args_list(['email', 'key']))
 			return {"status":"OK"}
 		except Exception as e:
-			print(e, file=sys.stderr)
+			print(e, sys.stderr)
 			return {"status": "ERROR"}
 	def get(self):
 		# TODO, have this return html saying "your account is verified" instead of this json
@@ -234,7 +234,7 @@ class Verify(Resource):
 			self.handleRequest(request.args)
 			return {"status":"OK"}
 		except Exception as e:
-			print(e, file=sys.stderr)
+			print(e, sys.stderr)
 			return {"status": "ERROR"}
 	def handleRequest(self, args):
 		# args = parse_args_list(['email', 'key'])
@@ -275,7 +275,7 @@ class Login(Resource):
 		if currUser != None:
 			if currUser['password'] == args['password']:
 				if currUser['enabled']:
-					print('####################### verification' + currUser['verification'], file=sys.stderr)
+					print('####################### verification' + currUser['verification'], sys.stderr)
 					headers = {'Content-Type': 'application/json'}
 					response = make_response(jsonify({"status": "OK"}), 200, headers)
 					response.set_cookie('username', currUser['username'])
@@ -318,7 +318,7 @@ class Logout(Resource):
 			response.set_cookie('grid', '', expires = 0)
 			return response
 		except Exception as e:
-			print(e, file=sys.stderr)
+			print(e, sys.stderr)
 			return {'status': "ERROR"}
 
 class ListGames(Resource):

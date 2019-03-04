@@ -66,6 +66,12 @@ $(function(){
 		});
 	});
 
+	$('#getgame').click((e) => {
+		$.post('http://localhost:5000/getgame', $.param({'id': $('#gameID').val()}),(data) => {
+			// Fill in getGame function here
+		});
+	});
+
 
 	$('#submit').click((e)=>{
 		$('.boxes').css('display', 'grid');
