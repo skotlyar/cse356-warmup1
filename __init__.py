@@ -323,9 +323,49 @@ class Logout(Resource):
 
 class ListGames(Resource):
 	def post(self):
-		users = get_users_coll()
-		
+		try:
+			username = request.cookies.get('username')
+			password = request.cookies.get('password')
+			users = get_users_coll()
+			user = users.find_one({'username': username})
+			if user is None:
+				return {'status': 'ERROR'}
+			resp = {}
+			resp['status'] = 'OK'
+			resp['games'] = []
+			for game in user['games']:
+				subgame = {}
+				subgame['id'] = game['id']
+				subgame['start_date'] = game['start_date']
+				resp['games'].append(subgame)
+			return resp
+		except Exception as e:
+			print(e, file-sys.stderr)
+			return {'status': 'ERROR'}
 
+class GetGame(Resource):
+	def post(self):
+		try:
+			username = request.cookies.get('username')
+			password = request.cookies.get('password')
+			users = get_users_coll()
+			user = users.find_one({'username': username})
+			if user is None:
+				return {'status': 'ERROR'}
+			if user['password'] != password:
+				return {'status': 'ERROR'}
+			args = parse_args_list(['id'])
+			for game in user['games']:
+				if game['id'] == args['id']:
+					resp = {}
+					resp['status'] = 'OK'
+					resp['grid'] = game['grid']
+					return resp
+			return {'status': 'ERROR'}
+		except Exception as e:
+			print(e, file-sys.stderr)
+			return {'status': 'ERROR'}
+			
 
 def send_email(receiver, message):
 	port = 465  # For SSL
@@ -362,6 +402,7 @@ api.add_resource(AddUser, '/adduser')
 api.add_resource(Verify, '/verify')
 api.add_resource(Login, '/login')
 api.add_resource(Logout, '/logout')
+api.add_resource(ListGames, '/listgames')
 
 
 

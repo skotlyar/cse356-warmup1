@@ -60,6 +60,12 @@ $(function(){
 		console.log('outside if');
 	});
 
+	$('#listgames').click((e) => {
+		$.post('http://localhost:5000/listgames', (data, textStatus, xhr) => {
+			$('#listgamesdiv').text(JSON.stringify(data));
+		});
+	});
+
 
 	$('#submit').click((e)=>{
 		$('.boxes').css('display', 'grid');
