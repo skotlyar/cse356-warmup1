@@ -122,10 +122,9 @@ class MakeMove(Resource):
 			grid[move] = 'O'
 			model[move] = -1
 			resp['winner'] = ttt.checkWinner(model)
+			users.update_one({'username':username}, {'$set':{'current_game.grid':grid}})
 			if self._update_winner(resp['winner'], username):
 				self._save_and_reset(username)
-			else:
-				users.update_one({'username':username}, {'$set':{'current_game.grid':grid}})
 				
 		# print('#######################model:' + str(model), file=sys.stderr)
 		currUser = users.find_one({'username':username})
@@ -174,50 +173,50 @@ class MakeMove(Resource):
 class AddUser(Resource):
 	def post(self):
 		# TODO make try catch, return success or failure in json format
-		try:
-			args = parse_args_list(['username', 'password', 'email'])
-			username = args['username']
-			password = args['password']
-			email = args['email']
-			users = get_users_coll()
-			user = {}
-			user['username'] = username
-			user['password'] = password
-			user['email'] = email
-			user['verification'] = generate_code()
-			user['enabled'] = False
-			user['games'] = []
-			game = {}
-			now = datetime.datetime.now()
-			month = str(now.month) if len(str(now.month)) == 2 else '0' + str(now.month)
-			day = str(now.day) if len(str(now.day)) == 2 else '0' + str(now.day)
-			date = str(now.year) + '-' + month + '-' + day
-			game['id'] = 1
-			game['start_date'] = date
-			game['grid'] = [" "," "," "," "," "," "," "," "," "]
-			# user['games'].append(game)
-			user['current_game'] = game
-			winner = ''
-			user['score'] = {}
-			user['score']['wins'] = 0
-			user['score']['wgor'] = 0
-			user['score']['tie'] = 0
+		#try:
+		args = parse_args_list(['username', 'password', 'email'])
+		username = args['username']
+		password = args['password']
+		email = args['email']
+		users = get_users_coll()
+		user = {}
+		user['username'] = username
+		user['password'] = password
+		user['email'] = email
+		user['verification'] = generate_code()
+		user['enabled'] = False
+		user['games'] = []
+		game = {}
+		now = datetime.datetime.now()
+		month = str(now.month) if len(str(now.month)) == 2 else '0' + str(now.month)
+		day = str(now.day) if len(str(now.day)) == 2 else '0' + str(now.day)
+		date = str(now.year) + '-' + month + '-' + day
+		game['id'] = 1
+		game['start_date'] = date
+		game['grid'] = [" "," "," "," "," "," "," "," "," "]
+		# user['games'].append(game)
+		user['current_game'] = game
+		winner = ''
+		user['score'] = {}
+		user['score']['wins'] = 0
+		user['score']['wgor'] = 0
+		user['score']['tie'] = 0
 
-			if users.find({"username":username}).count() > 0:
-				return {"status":"ERROR", "message":"The requested username has already been taken."}
+		if users.find({"username":username}).count() > 0:
+			return {"status":"ERROR", "message":"The requested username has already been taken."}
 
-			if users.find({"email":email}).count() > 0:
-				return {"status":"ERROR", "message":"The requested email has already been taken."}
+		if users.find({"email":email}).count() > 0:
+			return {"status":"ERROR", "message":"The requested email has already been taken."}
 
-			url = 'http://localhost:5000/verify?email=' + email + '&key=' + user['verification']
-			message = 'Subject: Verify Your Email\n\n Click here to verify your email\n' + url
-			send_email(email, message)
-			users.insert(user)
-			return {"status":"OK"}
+		url = 'http://130.245.170.88/verify?email=' + email + '&key=' + user['verification']
+		message = 'Subject: Verify Your Email\n\n Click here to verify your email\n' + url
+		send_email(email, message)
+		users.insert(user)
+		return {"status":"OK"}
 		
-		except Exception as e:
+		#except Exception as e:
 			# print(e, file=sys.stderr)
-			return {"status":"ERROR"}
+			#return {"status":"ERROR"}
 
 class Verify(Resource):
 	def post(self):
@@ -340,7 +339,7 @@ class ListGames(Resource):
 				resp['games'].append(subgame)
 			return resp
 		except Exception as e:
-			print(e, file-sys.stderr)
+			print(e, sys.stderr)
 			return {'status': 'ERROR'}
 
 class GetGame(Resource):
@@ -364,39 +363,39 @@ class GetGame(Resource):
 					return resp
 			return {'status': 'ERROR'}
 		except Exception as e:
-			print(e, file=sys.stderr)
+			print(e, sys.stderr)
 			return {'status': 'ERROR'}
 
 class GetScore(Resource):
 	def post(self):
-		# try:
-		username = request.cookies.get('username')
-		password = request.cookies.get('password')
-		users = get_users_coll()
-		user = users.find_one({'username': username})
-		if user is None:
-			return {'status': 'ERROR'}
-		if user['password'] != password:
-			return {'status': 'ERROR'}
-		resp = {}
-		resp['status'] = 'OK'
-		resp['human'] = user['score']['wins']
-		resp['wopr'] = user['score']['wgor']
-		resp['tie'] = user['score']['tie']
-		return resp
-		# except Exception as e:
-		# 	print(e, file=sys.stderr)
-		# 	return {'status':'ERROR'}
+		try:
+			username = request.cookies.get('username')
+			password = request.cookies.get('password')
+			users = get_users_coll()
+			user = users.find_one({'username': username})
+			if user is None:
+				return {'status': 'ERROR'}
+			if user['password'] != password:
+				return {'status': 'ERROR'}
+			resp = {}
+			resp['status'] = 'OK'
+			resp['human'] = user['score']['wins']
+			resp['wopr'] = user['score']['wgor']
+			resp['tie'] = user['score']['tie']
+			return resp
+		except Exception as e:
+			print(e, sys.stderr)
+			return {'status':'ERROR'}
 
 def send_email(receiver, message):
 	port = 465  # For SSL
 	password = "W2v0&lkde"
 	# Create a secure SSL context
 	context = ssl.create_default_context()
-	with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-		server.login("ljkasdfoir21395@gmail.com", password)
-		# TODO: Send email here
-		server.sendmail("ljkasdfoir21395@gmail.com", receiver, message)
+	server = smtplib.SMTP_SSL("smtp.gmail.com", port)
+	server.login("ljkasdfoir21395@gmail.com", password)
+	# TODO: Send email here
+	server.sendmail("ljkasdfoir21395@gmail.com", receiver, message)
 
 def parse_args_list(argnames):
 	parser = reqparse.RequestParser()
