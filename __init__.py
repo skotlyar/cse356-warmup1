@@ -85,6 +85,8 @@ class MakeMove(Resource):
 		password = request.cookies.get('password')
 		users = get_users_coll()
 		user = users.find_one({'username':username})
+		if user is None:
+			return {'status':'ERROR', 'message':'invalid cookie'}
 		if user['password'] != password:
 			return {'status':'ERROR', 'message':'invalid cookie authentication'}
 		args = parse_args_list(['move'])
@@ -105,7 +107,7 @@ class MakeMove(Resource):
 				model.append(0)
 		resp = {}
 		resp['grid'] = grid
-		resp['winner'] = ''
+		#resp['winner'] = ''
 		#Check for winner
 		winner = ttt.checkWinner(model)
 		# If there is a winner, return response
@@ -121,9 +123,11 @@ class MakeMove(Resource):
 			move = ttt.makeMove(model)
 			grid[move] = 'O'
 			model[move] = -1
-			resp['winner'] = ttt.checkWinner(model)
+			w = ttt.checkWinner(model)
+			if w != '':
+				resp['winner'] = w
 			users.update_one({'username':username}, {'$set':{'current_game.grid':grid}})
-			if self._update_winner(resp['winner'], username):
+			if self._update_winner(w, username):
 				self._save_and_reset(username)
 				
 		# print('#######################model:' + str(model), file=sys.stderr)
@@ -173,50 +177,50 @@ class MakeMove(Resource):
 class AddUser(Resource):
 	def post(self):
 		# TODO make try catch, return success or failure in json format
-		#try:
-		args = parse_args_list(['username', 'password', 'email'])
-		username = args['username']
-		password = args['password']
-		email = args['email']
-		users = get_users_coll()
-		user = {}
-		user['username'] = username
-		user['password'] = password
-		user['email'] = email
-		user['verification'] = generate_code()
-		user['enabled'] = False
-		user['games'] = []
-		game = {}
-		now = datetime.datetime.now()
-		month = str(now.month) if len(str(now.month)) == 2 else '0' + str(now.month)
-		day = str(now.day) if len(str(now.day)) == 2 else '0' + str(now.day)
-		date = str(now.year) + '-' + month + '-' + day
-		game['id'] = 1
-		game['start_date'] = date
-		game['grid'] = [" "," "," "," "," "," "," "," "," "]
-		# user['games'].append(game)
-		user['current_game'] = game
-		winner = ''
-		user['score'] = {}
-		user['score']['wins'] = 0
-		user['score']['wgor'] = 0
-		user['score']['tie'] = 0
+		try:
+			args = parse_args_list(['username', 'password', 'email'])
+			username = args['username']
+			password = args['password']
+			email = args['email']
+			users = get_users_coll()
+			user = {}
+			user['username'] = username
+			user['password'] = password
+			user['email'] = email
+			user['verification'] = generate_code()
+			user['enabled'] = False
+			user['games'] = []
+			game = {}
+			now = datetime.datetime.now()
+			month = str(now.month) if len(str(now.month)) == 2 else '0' + str(now.month)
+			day = str(now.day) if len(str(now.day)) == 2 else '0' + str(now.day)
+			date = str(now.year) + '-' + month + '-' + day
+			game['id'] = 1
+			game['start_date'] = date
+			game['grid'] = [" "," "," "," "," "," "," "," "," "]
+			# user['games'].append(game)
+			user['current_game'] = game
+			winner = ''
+			user['score'] = {}
+			user['score']['wins'] = 0
+			user['score']['wgor'] = 0
+			user['score']['tie'] = 0
 
-		if users.find({"username":username}).count() > 0:
-			return {"status":"ERROR", "message":"The requested username has already been taken."}
+			if users.find({"username":username}).count() > 0:
+				return {"status":"ERROR", "message":"The requested username has already been taken."}	
 
-		if users.find({"email":email}).count() > 0:
-			return {"status":"ERROR", "message":"The requested email has already been taken."}
+			if users.find({"email":email}).count() > 0:
+				return {"status":"ERROR", "message":"The requested email has already been taken."}
 
-		url = 'http://130.245.170.88/verify?email=' + email + '&key=' + user['verification']
-		message = 'Subject: Verify Your Email\n\n Click here to verify your email\n' + url
-		send_email(email, message)
-		users.insert(user)
-		return {"status":"OK"}
+			url = 'http://130.245.170.88/verify?email=' + email + '&key=' + user['verification']
+			message = 'Subject: Verify Your Email\n\n Click here to verify your email\n' + url
+			send_email(email, message)
+			users.insert(user)
+			return {"status":"OK"}
 		
-		#except Exception as e:
-			# print(e, file=sys.stderr)
-			#return {"status":"ERROR"}
+		except Exception as e:
+			print(e, sys.stderr)			
+			return {"status":"ERROR"}
 
 class Verify(Resource):
 	def post(self):
@@ -242,8 +246,10 @@ class Verify(Resource):
 		users = get_users_coll()
 		user = users.find_one({"email":email})
 
-		if user['verification'] == key or user['verification'] == 'abracadabra':
+		if user['verification'] == key or key == 'abracadabra':
 			users.update_one({"email":email}, {"$set":{"enabled":True}})
+			return
+		raise Exception('incorrect verification key')
 
 class Login(Resource):
 
