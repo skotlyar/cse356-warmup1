@@ -356,16 +356,37 @@ class GetGame(Resource):
 				return {'status': 'ERROR'}
 			args = parse_args_list(['id'])
 			for game in user['games']:
-				if game['id'] == args['id']:
+				if game['id'] == int(args['id']):
 					resp = {}
 					resp['status'] = 'OK'
 					resp['grid'] = game['grid']
+					resp['winner'] = game['winner']
 					return resp
 			return {'status': 'ERROR'}
 		except Exception as e:
-			print(e, file-sys.stderr)
+			print(e, file=sys.stderr)
 			return {'status': 'ERROR'}
-			
+
+class GetScore(Resource):
+	def post(self):
+		# try:
+		username = request.cookies.get('username')
+		password = request.cookies.get('password')
+		users = get_users_coll()
+		user = users.find_one({'username': username})
+		if user is None:
+			return {'status': 'ERROR'}
+		if user['password'] != password:
+			return {'status': 'ERROR'}
+		resp = {}
+		resp['status'] = 'OK'
+		resp['human'] = user['score']['wins']
+		resp['wopr'] = user['score']['wgor']
+		resp['tie'] = user['score']['tie']
+		return resp
+		# except Exception as e:
+		# 	print(e, file=sys.stderr)
+		# 	return {'status':'ERROR'}
 
 def send_email(receiver, message):
 	port = 465  # For SSL
@@ -403,6 +424,8 @@ api.add_resource(Verify, '/verify')
 api.add_resource(Login, '/login')
 api.add_resource(Logout, '/logout')
 api.add_resource(ListGames, '/listgames')
+api.add_resource(GetGame, '/getgame')
+api.add_resource(GetScore, '/getscore')
 
 
 

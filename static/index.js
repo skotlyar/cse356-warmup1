@@ -69,6 +69,14 @@ $(function(){
 	$('#getgame').click((e) => {
 		$.post('http://localhost:5000/getgame', $.param({'id': $('#gameID').val()}),(data) => {
 			// Fill in getGame function here
+			$('#getgamediv').text(JSON.stringify(data));
+		});
+	});
+
+	$('#getscore').click((e) => {
+		$.post('http://localhost:5000/getscore', (data) => {
+			// Fill in getGame function here
+			$('#getscorediv').text(JSON.stringify(data));
 		});
 	});
 
