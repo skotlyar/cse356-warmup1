@@ -91,7 +91,10 @@ class MakeMove(Resource):
 		if args['move'] is None:
 			return {'grid': user['current_game']['grid']}
 		grid = user['current_game']['grid']
-		grid[int(args['move'])] = 'X'
+		if grid[int(args['move'])] ==  ' ':
+			grid[int(args['move'])] = 'X'
+		else:
+			return {'status':'ERROR', 'message': 'The move is already taken'}
 		model = []
 		for i in grid:
 			if i == 'X':
@@ -108,7 +111,8 @@ class MakeMove(Resource):
 		# If there is a winner, return response
 		if winner != '':
 			resp['winner'] = winner
-			self._update_winner(winner, username)
+			if self._update_winner(winner, username):
+				self._save_and_reset(username)
 			# move game to history, reset current game?
 			#not too sure about this yet, cuz we still have to return it 
 			#so i don't really know how we'd play another game
@@ -118,22 +122,54 @@ class MakeMove(Resource):
 			grid[move] = 'O'
 			model[move] = -1
 			resp['winner'] = ttt.checkWinner(model)
-			self._update_winner(resp['winner'], username)
-			users.update_one({'username':username}, {'$set':{'current_game.grid':grid}})
+			if self._update_winner(resp['winner'], username):
+				self._save_and_reset(username)
+			else:
+				users.update_one({'username':username}, {'$set':{'current_game.grid':grid}})
+				
 		# print('#######################model:' + str(model), file=sys.stderr)
-		return resp
+		currUser = users.find_one({'username':username})
+		headers = {'Content-Type': 'application/json'}
+		response = make_response(jsonify(resp), 200, headers)
+		response.set_cookie('grid', str(currUser['current_game']['grid']))	
+		return response
+
 	def _update_winner(self, winner, username):
 		users = get_users_coll()
 		user = users.find_one({'username': username})
 		if winner == ' ':
 			ties = int(user['score']['tie']) + 1
-			users.update_one({'username':username}, {'$set':{'score.tie':ties}})
+			users.update_one({'username':username}, {'$set':{'score.tie':ties, 'current_game.winner':winner}})
+			return True
 		elif winner == 'X':
 			wins = int(user['score']['wins']) + 1
-			users.update_one({'username':username}, {'$set':{'score.wins':wins}})
+			users.update_one({'username':username}, {'$set':{'score.wins':wins, 'current_game.winner':winner}})
+			return True
+
 		elif winner == 'O':
 			losses = int(user['score']['wgor']) + 1
-			users.update_one({'username':username}, {'$set':{'score.wgor':losses}})
+			users.update_one({'username':username}, {'$set':{'score.wgor':losses, 'current_game.winner':winner}})
+			return True
+		return False
+	def _save_and_reset(self, username):
+		users = get_users_coll()
+		user = users.find_one({'username':username})
+		game = user['current_game']
+		new_game = {}
+		now = datetime.datetime.now()
+		month = str(now.month) if len(str(now.month)) == 2 else '0' + str(now.month)
+		day = str(now.day) if len(str(now.day)) == 2 else '0' + str(now.day)
+		date = str(now.year) + '-' + month + '-' + day
+		new_game['id'] = game['id'] + 1
+		new_game['start_date'] = date
+		new_game['grid'] = [" "," "," "," "," "," "," "," "," "]
+		users.update_one({'username': username}, {'$set':{'current_game':new_game}})
+		users.update_one({'username': username}, {'$push': {'games': game}})
+	# def _next_id(self, username):
+	# 	users = get_users_coll()
+	# 	user = users.find_one({'username':username})
+	# 	current_game = user['current_game']
+	# 	return max(ids) + 1
 
 class AddUser(Resource):
 	def post(self):
@@ -189,6 +225,7 @@ class Verify(Resource):
 			self.handleRequest(parse_args_list(['email', 'key']))
 			return {"status":"OK"}
 		except Exception as e:
+			print(e, file=sys.stderr)
 			return {"status": "ERROR"}
 	def get(self):
 		# TODO, have this return html saying "your account is verified" instead of this json
@@ -197,6 +234,7 @@ class Verify(Resource):
 			self.handleRequest(request.args)
 			return {"status":"OK"}
 		except Exception as e:
+			print(e, file=sys.stderr)
 			return {"status": "ERROR"}
 	def handleRequest(self, args):
 		# args = parse_args_list(['email', 'key'])
@@ -212,6 +250,20 @@ class Login(Resource):
 
 	def get(self):
 		headers = {'Content-Type': 'text/html'}
+		username = request.cookies.get('username')
+		password = request.cookies.get('password')
+		users = get_users_coll()
+		currUser = users.find_one({'username': username})
+		if(currUser is None):
+			return make_response(render_template('login.html'),200,headers)
+		if(currUser['password'] == password):
+			now = datetime.datetime.now()
+			month =str(now.month) if len(str(now.month)) == 2 else '0' + str(now.month)
+			day =str(now.day) if len(str(now.day)) == 2 else '0' + str(now.day)
+			date = str(now.year) + '-' + month + '-' + day
+			stuff = {'name': username, 'date': date}
+			return make_response(render_template('index.html', stuff = stuff),200,headers)
+
 		return make_response(render_template('login.html'),200,headers)
 	def post(self):
 		# validate user and password
@@ -253,18 +305,25 @@ class Logout(Resource):
 	def post(self):
 		# Update cookie to invalid one; no access to database bc cookie just serves to initialize the board upon login
 		try:
-			username = request.cookie.get('username')
-			password = request.cookie.get('password')
+			# username = request.cookies.get('username')
+			# password = request.cookies.get('password')
 			# grid = request.cookie.get('grid')
 			# grid = eval(grid)
 			# users = get_users_coll()
 			# users.update_one({'username':username, 'password':password}, {'grid':grid})
 			headers = {'Content-Type': 'application/json'}
 			response = make_response(jsonify({"status": "OK"}), 200, headers)
-			response.set_cookie('sessionID', '', expires = 0)
+			response.set_cookie('username', '', expires = 0)
+			response.set_cookie('password', '', expires = 0)
+			response.set_cookie('grid', '', expires = 0)
 			return response
 		except Exception as e:
+			print(e, file=sys.stderr)
 			return {'status': "ERROR"}
+
+class ListGames(Resource):
+	def post(self):
+		users = get_users_coll()
 		
 
 
@@ -302,7 +361,7 @@ api.add_resource(MakeMove, '/ttt/play')
 api.add_resource(AddUser, '/adduser')
 api.add_resource(Verify, '/verify')
 api.add_resource(Login, '/login')
-# api.add_resource(Logout, '/logout')
+api.add_resource(Logout, '/logout')
 
 
 
