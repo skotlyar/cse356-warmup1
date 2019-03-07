@@ -349,35 +349,47 @@ class GetScore(Resource):
 
 class Listen(Resource):
 	def post(self):
-		parser = reqparse.RequestParser()
-		parser.add_argument(arg, action='append')
-		args = parser.parse_args()
-		connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-		channel = connection.channel()
-		exchange = channel.exchange_declare(exchange='hw3',
-                         exchange_type='direct')
-		queue = channel.queue_declare(exclusive=True)
+		try:
+			parser = reqparse.RequestParser()
+			parser.add_argument('keys', action='append')
+			args = parser.parse_args()
+			connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+			channel = connection.channel()
+			exchange = channel.exchange_declare(exchange='hw3',
+       	                 exchange_type='direct')
+			queue = channel.queue_declare(exclusive=True)
+			queue_name = queue.method.queue
 
-		for key in args['keys']:
-			queue_bind(queue, exchange, routing_key=key)
+			for key in args['keys']:
+				channel.queue_bind(exchange='hw3', queue=queue_name, routing_key=key)
 
-		while True:
-			msg = channel.basic_get(queue)
-			if msg[0] is not None:
-				break
+			while True:
+				msg = channel.basic_get(queue=queue_name)
+				if msg[0] is not None:
+					break
 
-		connection.close()
-		return {'msg':msg[2]}
+			connection.close()
+			return {'msg':msg[2]}
+
+		except Exception as e:
+			print(e, sys.stderr)
+			return {'status':'ERROR'}
 
 class Speak(Resource):
 	def post(self):
-		args = parse_args_list(['key', 'msg'])
-		connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-		channel = connection.channel()
-		channel.basic_publish(exchange='hw3',
-                      routing_key=args['key'],
-                      body=args['msg'])
-		connection.close()
+		try:
+			args = parse_args_list(['key', 'msg'])
+			connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+			channel = connection.channel()
+			channel.basic_publish(exchange='hw3',
+				routing_key=args['key'],
+				body=args['msg'])
+			connection.close()
+			return {'key':args['key'], 'msg':args['msg']}
+	
+		except Exception as e:
+                        print(e, sys.stderr)
+                        return {'status':'ERROR'}
 
 def send_email(receiver, message):
 	port = 465  # For SSL
