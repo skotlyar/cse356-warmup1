@@ -381,6 +381,9 @@ class Speak(Resource):
 			args = parse_args_list(['key', 'msg'])
 			connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
 			channel = connection.channel()
+			exchange = channel.exchange_declare(exchange='hw3',
+                         exchange_type='direct')
+
 			channel.basic_publish(exchange='hw3',
 				routing_key=args['key'],
 				body=args['msg'])
