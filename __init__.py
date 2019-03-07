@@ -165,7 +165,7 @@ class AddUser(Resource):
 			if users.find({"email":email}).count() > 0:
 				return {"status":"ERROR", "message":"The requested email has already been taken."}
 
-			url = 'http://130.245.170.88/verify?email=' + email + '&key=' + user['verification']
+			url = 'http://131.245.171.129/verify?email=' + email + '&key=' + user['verification']
 			message = 'Subject: Verify Your Email\n\n Click here to verify your email\n' + url
 			send_email(email, message)
 			users.insert(user)
@@ -395,7 +395,7 @@ def parse_args_list(argnames):
 	return args
 
 def get_users_coll():
-	myclient = pymongo.MongoClient('mongodb://130.245.170.88:27017/')
+	myclient = pymongo.MongoClient('mongodb://131.245.171.129:27017/')
 	mydb = myclient['warmup2']
 	users = mydb['users']
 	return users
