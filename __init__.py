@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, make_response, jsonify, pika
+from flask import Flask, request, render_template, make_response, jsonify
 from flask_restful import Resource, Api, reqparse
 import pymongo
 import datetime
@@ -7,6 +7,7 @@ import tttalgorithm as ttt
 import smtplib, ssl
 import string
 import random
+import pika
 app = Flask(__name__)
 api = Api(app)
 
