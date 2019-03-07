@@ -349,7 +349,9 @@ class GetScore(Resource):
 
 class Listen(Resource):
 	def post(self):
-		args = parse_args_list(['keys'])
+		parser = reqparse.RequestParser()
+		parser.add_argument(arg, action='append')
+		args = parser.parse_args()
 		connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
 		channel = connection.channel()
 		exchange = channel.exchange_declare(exchange='hw3',
@@ -360,13 +362,12 @@ class Listen(Resource):
 			queue_bind(queue, exchange, routing_key=key)
 
 		while True:
-			msg = basic_get(queue)
+			msg = channel.basic_get(queue)
 			if msg[0] is not None:
 				break
 
-		return {'msg':msg[2]}
-
 		connection.close()
+		return {'msg':msg[2]}
 
 class Speak(Resource):
 	def post(self):
