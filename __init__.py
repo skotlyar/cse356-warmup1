@@ -9,7 +9,7 @@ import smtplib, ssl
 import string
 import random
 import pika
-from werkzeug.datastructures import filestorage
+from werkzeug.datastructures import FileStorage
 app = Flask(__name__)
 api = Api(app)
 
