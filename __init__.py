@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, make_response, jsonify
 from flask_restful import Resource, Api, reqparse
+from cassandra.cluster import Cluster
 import pymongo
 import datetime
 import sys
@@ -394,6 +395,24 @@ class Speak(Resource):
                         print(e, sys.stderr)
                         return {'status':'ERROR'}
 
+class Deposit(Resource):
+	def post(self):
+		parser = reqparse.RequestParser()
+		parser.add_argument('filename', type=string, location='files')
+		parser.add_argument('contents', type=werkzeug.datastructures.FileStorage, location='files')
+		args = parser.parse_args()
+		cluster = Cluster(['130.245.171.210'])
+		session = cluster.connect('hw5')
+
+		strCQL = "INSERT INTO imgs (filename,contents) VALUES (?,?)"
+		pStatement = session.prepare(strCQL)
+		session.execute(pStatement,[args['filename'], textAsBlob(args['contents'])])
+		return {'status': 'OK'}
+
+class Retrieve(Resource):
+	def get(self):
+		args = parse_args_list(['filename'])
+
 def send_email(receiver, message):
 	port = 465  # For SSL
 	password = "W2v0&lkde"
@@ -436,6 +455,8 @@ api.add_resource(GetGame, '/getgame')
 api.add_resource(GetScore, '/getscore')
 api.add_resource(Listen, '/listen')
 api.add_resource(Speak, '/speak')
+api.add_resource(Deposit, '/deposit')
+api.add_resource(Retrieve, '/retrieve')
 
 
 
