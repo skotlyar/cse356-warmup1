@@ -9,6 +9,8 @@ import smtplib, ssl
 import string
 import random
 import pika
+import MySQLdb
+import pylibmc
 from werkzeug.datastructures import FileStorage
 app = Flask(__name__)
 api = Api(app)
@@ -420,12 +422,17 @@ class HW7(Resource):
 		club = args['club']
 		pos = args['pos']
 
+		mc = pylibmc.Client(["127.0.0.1"], binary=True, behaviors={"tcp_nodelay": True, "ketama": True})
+		if club+pos in mc:
+			print("I saw this before", sys.stderr)
+			return mc[club+pos]
+
 		mydb = MySQLdb.connect(host='localhost',
     		user='root',
     		passwd='samid111',
     		db='hw7')
 		cursor = mydb.cursor()
-		cursor.execute("SELECT * FROM assists WHERE Club = "{}" and POS = "{}" ORDER BY Assists DESC, GS DESC, Player".format(club, pos))
+		cursor.execute("SELECT * FROM assists WHERE Club = \"{}\" and POS = \"{}\" ORDER BY Assists DESC, GS DESC, Player".format(club, pos))
 		topPlayer = cursor.fetchall()[0]
 
 		resp = {}
@@ -434,10 +441,9 @@ class HW7(Resource):
 		resp['max_assists'] = topPlayer[5]
 		resp['player'] = topPlayer[0]
 
-		#Calculate avg assists and save in response
-		cursor.execute("SELECT AVG(Assists) FROM assists WHERE Club = "{}" and POS = "{}"".format(club, pos))
+		cursor.execute("SELECT AVG(Assists) FROM assists WHERE Club = \"{}\" and POS = \"{}\"".format(club, pos))
 		resp['avg_assists'] = float(cursor.fetchall()[0][0])
-
+		mc[club+pos] = resp
 		return resp
 
 
