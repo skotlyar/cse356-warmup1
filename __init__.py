@@ -414,6 +414,33 @@ class Retrieve(Resource):
 	def get(self):
 		args = parse_args_list(['filename'])
 
+class HW7(Resource):
+	def get(self):
+		args = request.args
+		club = args['club']
+		pos = args['pos']
+
+		mydb = MySQLdb.connect(host='localhost',
+    		user='root',
+    		passwd='samid111',
+    		db='hw7')
+		cursor = mydb.cursor()
+		cursor.execute("SELECT * FROM assists WHERE Club = "{}" and POS = "{}" ORDER BY Assists DESC, GS DESC, Player".format(club, pos))
+		topPlayer = cursor.fetchall()[0]
+
+		resp = {}
+		resp['club'] = club
+		resp['pos'] = pos
+		resp['max_assists'] = topPlayer[5]
+		resp['player'] = topPlayer[0]
+
+		#Calculate avg assists and save in response
+		cursor.execute("SELECT AVG(Assists) FROM assists WHERE Club = "{}" and POS = "{}"".format(club, pos))
+		resp['avg_assists'] = float(cursor.fetchall()[0][0])
+
+		return resp
+
+
 def send_email(receiver, message):
 	port = 465  # For SSL
 	password = "W2v0&lkde"
@@ -458,6 +485,7 @@ api.add_resource(Listen, '/listen')
 api.add_resource(Speak, '/speak')
 api.add_resource(Deposit, '/deposit')
 api.add_resource(Retrieve, '/retrieve')
+api.add_resource(HW7, '/hw7')
 
 
 
